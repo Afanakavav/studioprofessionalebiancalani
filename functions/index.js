@@ -3,15 +3,16 @@ const nodemailer = require('nodemailer');
 const cors = require('cors')({ origin: true });
 
 // Configurazione email SMTP (Gmail)
-// Le credenziali vengono da Firebase Secrets (produzione) o .env (locale)
-// Firebase Secrets è il metodo moderno e sicuro per credenziali in produzione
+// Le credenziali vengono da:
+// 1. Firebase Secrets (produzione - metodo moderno, richiede Blaze)
+// 2. Firebase Config (produzione - metodo legacy, funziona sempre con Blaze)
+// 3. .env file (locale per test)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        // Per locale: usa .env
-        // Per produzione: Firebase caricherà automaticamente i secrets come env vars
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        // Priorità: Secrets/Config Firebase > .env locale
+        user: process.env.EMAIL_USER || functions.config().email?.user,
+        pass: process.env.EMAIL_PASS || functions.config().email?.password,
     },
 });
 
@@ -161,7 +162,7 @@ www.apheron.io/studioprofessionalebiancalani
 
         // Configurazione email
         const mailOptions = {
-            from: `"Sito Web Studio Biancalani" <${process.env.EMAIL_USER}>`,
+            from: `"Sito Web Studio Biancalani" <${process.env.EMAIL_USER || functions.config().email?.user}>`,
             to: 'francesco.perone00@gmail.com',
             replyTo: email, // Permette di rispondere direttamente al cliente
             subject: `Richiesta Appuntamento - ${tipoCliente} - ${nome}`,
